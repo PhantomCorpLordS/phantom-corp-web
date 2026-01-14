@@ -3,102 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHANTOM V14 | FROZEN CORE</title>
+    <title>PHANTOM CORP | HACKER BLUE</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        body { margin: 0; background: #000; color: #8cf; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; }
-        #login-panel { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 260px; background: rgba(0, 10, 30, 0.9); border: 1px solid #8cf; padding: 15px; text-align: center; z-index: 100; box-shadow: 0 0 25px #048; }
-        input { background: #000; border: 1px solid #068; color: #8cf; width: 85%; padding: 10px; margin: 10px 0; text-align: center; outline: none; }
-        button { background: #068; color: #fff; border: none; padding: 10px; font-weight: bold; width: 93%; cursor: pointer; }
-        #camera-ui { position: absolute; top: 15px; right: 15px; width: 100px; height: 80px; border: 1px solid #8cf; background: #000; z-index: 50; }
-        #webcam { width: 100%; height: 100%; object-fit: cover; filter: sepia(0.5) hue-rotate(180deg) brightness(1.2); }
-        .scan-line { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: rgba(100, 200, 255, 0.3); z-index: 1000; animation: scan 3s linear infinite; }
-        @keyframes scan { from { top: 0; } to { top: 100%; } }
+        body { margin: 0; background: #000; color: #0cf; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; }
+        
+        /* Hacker Eső Vászon */
+        #matrix-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; opacity: 0.3;
+        }
+
+        #login-panel {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            width: 250px; background: rgba(0, 5, 15, 0.9);
+            border: 1px solid #0cf; padding: 15px; text-align: center;
+            z-index: 100; box-shadow: 0 0 30px #048;
+        }
+        
+        input { background: #000; border: 1px solid #068; color: #0cf; width: 85%; padding: 10px; margin: 10px 0; text-align: center; outline: none; border-radius: 0; }
+        button { background: #068; color: #fff; border: none; padding: 10px; font-weight: bold; width: 93%; cursor: pointer; text-transform: uppercase; }
+
+        #camera-ui { position: absolute; top: 15px; right: 15px; width: 110px; height: 85px; border: 1px solid #0cf; background: #000; z-index: 50; box-shadow: 0 0 15px #048; }
+        #webcam { width: 100%; height: 100%; object-fit: cover; filter: cyan(1) contrast(1.2); }
     </style>
 </head>
 <body>
 
-    <div class="scan-line"></div>
+    <canvas id="matrix-canvas"></canvas>
     <div id="camera-ui"><video id="webcam" autoplay playsinline muted></video></div>
 
     <div id="login-panel">
-        <div style="font-size: 13px; letter-spacing: 4px; font-weight: bold; color:#8cf;">PHANTOM CORP V14</div>
-        <input type="password" id="pass" placeholder="FROZEN CODE">
-        <button onclick="check()">ACTIVATE</button>
+        <div style="font-size: 11px; letter-spacing: 4px; margin-bottom: 5px;">PHANTOM CORP.</div>
+        <input type="password" id="pass" placeholder="SECURITY KEY">
+        <button onclick="check()">UNSEAL SYSTEM</button>
     </div>
 
     <audio id="screamSound" src="https://www.soundjay.com/human/sounds/person-screaming-01.mp3"></audio>
 
     <script>
+        // --- HACKER DIGITÁLIS ESŐ (KÉK) ---
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const text = "PHANTOM.CORP.EST.2026";
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+
+        for (let x = 0; x < columns; x++) drops[x] = 1;
+
+        function drawMatrix() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#0cf"; // Neon kék
+            ctx.font = fontSize + "px monospace";
+
+            for (let i = 0; i < drops.length; i++) {
+                const char = text.charAt(Math.floor(Math.random() * text.length));
+                ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
+
+        // --- 3D JÉGVIRÁG KÖR ---
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        const group = new THREE.Group(); // Ez tartja majd a kört és a feliratot
+        const iceGroup = new THREE.Group();
+        const iceGeo = new THREE.TorusKnotGeometry(10, 0.5, 100, 16); // Egy bonyolultabb, jegesebb forma
+        const iceMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.5 });
+        const iceMesh = new THREE.Mesh(iceGeo, iceMat);
+        iceGroup.add(iceMesh);
+        scene.add(iceGroup);
 
-        // --- JÉGVIRÁGOS KÖR ---
-        const iceRingGeo = new THREE.TorusGeometry(12, 0.5, 32, 100);
-        const iceRingMat = new THREE.MeshBasicMaterial({ 
-            color: 0x88ccff, 
-            wireframe: true, 
-            transparent: true, 
-            opacity: 0.6 
-        });
-        const iceRing = new THREE.Mesh(iceRingGeo, iceRingMat);
-        group.add(iceRing);
-
-        // --- "PHANTOM" FELIRAT (Egyszerű szöveg, mert 3D font betöltése bonyolult) ---
-        const phantomText = document.createElement('div');
-        phantomText.style.color = '#8cf';
-        phantomText.style.fontFamily = 'Courier New, monospace';
-        phantomText.style.fontSize = '24px';
-        phantomText.style.fontWeight = 'bold';
-        phantomText.style.position = 'absolute';
-        phantomText.style.top = '50%';
-        phantomText.style.left = '50%';
-        phantomText.style.transform = 'translate(-50%, -50%)';
-        phantomText.style.textShadow = '0 0 10px #0ff';
-        phantomText.style.zIndex = '50';
-        phantomText.innerText = 'PHANTOM';
-        document.body.appendChild(phantomText);
-
-        scene.add(group);
         camera.position.z = 40;
 
-        let targetX = 0, targetY = 0;
+        let tX = 0, tY = 0;
         document.addEventListener('pointermove', (e) => {
-            targetY = (e.clientX - window.innerWidth / 2) * 0.0005; // Még lassabb
-            targetX = (e.clientY - window.innerHeight / 2) * 0.0005; // Még lassabb
+            tY = (e.clientX - window.innerWidth / 2) * 0.0005;
+            tX = (e.clientY - window.innerHeight / 2) * 0.0005;
         });
 
         function animate() {
             requestAnimationFrame(animate);
-            group.rotation.y += 0.002 + targetY; // Nagyon lassú alapforgás
-            group.rotation.x += targetX;
+            iceGroup.rotation.y += 0.005 + tY;
+            iceGroup.rotation.x += tX;
             renderer.render(scene, camera);
         }
         animate();
 
-        // --- KAMERA ÉS HANG LOGIKA ---
+        // --- RENDSZER ---
         const video = document.getElementById('webcam');
         const scream = document.getElementById('screamSound');
         navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s);
 
         function check() {
-            const code = document.getElementById('pass').value;
-            scream.play(); 
-
-            if(code === "1234") {
-                setTimeout(() => { scream.pause(); scream.currentTime = 0; }, 500);
-                alert("ACCESS GRANTED. WINTER IS COMING.");
+            scream.play();
+            const val = document.getElementById('pass').value;
+            if(val === "1234") {
+                alert("ACCESS GRANTED. WELCOME SIMI.");
             } else {
                 scream.loop = true;
-                scream.play();
-                alert("!!! INTRUSION DETECTED. FROZEN PROTOCOL ACTIVE !!!");
+                alert("ALERT: INTRUDER RECORDED.");
             }
         }
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>

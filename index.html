@@ -3,29 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHANTOM CORP | HACKER BLUE</title>
+    <title>PHANTOM V16 | BLUE RAIN</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body { margin: 0; background: #000; color: #0cf; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; }
         
-        /* Hacker Eső Vászon */
-        #matrix-canvas {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0; opacity: 0.3;
-        }
+        /* Hacker Eső Vászon a háttérben */
+        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.4; }
 
         #login-panel {
             position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-            width: 250px; background: rgba(0, 5, 15, 0.9);
+            width: 260px; background: rgba(0, 5, 15, 0.95);
             border: 1px solid #0cf; padding: 15px; text-align: center;
             z-index: 100; box-shadow: 0 0 30px #048;
         }
         
-        input { background: #000; border: 1px solid #068; color: #0cf; width: 85%; padding: 10px; margin: 10px 0; text-align: center; outline: none; border-radius: 0; }
-        button { background: #068; color: #fff; border: none; padding: 10px; font-weight: bold; width: 93%; cursor: pointer; text-transform: uppercase; }
+        input { background: #000; border: 1px solid #068; color: #0cf; width: 85%; padding: 10px; margin: 10px 0; text-align: center; outline: none; }
+        button { background: #068; color: #fff; border: none; padding: 10px; font-weight: bold; width: 93%; cursor: pointer; }
 
-        #camera-ui { position: absolute; top: 15px; right: 15px; width: 110px; height: 85px; border: 1px solid #0cf; background: #000; z-index: 50; box-shadow: 0 0 15px #048; }
-        #webcam { width: 100%; height: 100%; object-fit: cover; filter: cyan(1) contrast(1.2); }
+        #camera-ui { position: absolute; top: 15px; right: 15px; width: 100px; height: 80px; border: 1px solid #0cf; background: #000; z-index: 50; }
+        #webcam { width: 100%; height: 100%; object-fit: cover; filter: cyan(1) brightness(1.1); }
     </style>
 </head>
 <body>
@@ -34,7 +31,7 @@
     <div id="camera-ui"><video id="webcam" autoplay playsinline muted></video></div>
 
     <div id="login-panel">
-        <div style="font-size: 11px; letter-spacing: 4px; margin-bottom: 5px;">PHANTOM CORP.</div>
+        <div style="font-size: 11px; letter-spacing: 2px; font-weight: bold;">PHANTOM.CORP.EST.2026</div>
         <input type="password" id="pass" placeholder="SECURITY KEY">
         <button onclick="check()">UNSEAL SYSTEM</button>
     </div>
@@ -42,28 +39,25 @@
     <audio id="screamSound" src="https://www.soundjay.com/human/sounds/person-screaming-01.mp3"></audio>
 
     <script>
-        // --- HACKER DIGITÁLIS ESŐ (KÉK) ---
+        // --- KÉK DIGITÁLIS ESŐ ---
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
-
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const text = "PHANTOM.CORP.EST.2026";
+        const matrixText = "PHANTOM.CORP.EST.2026";
         const fontSize = 14;
         const columns = canvas.width / fontSize;
         const drops = [];
-
         for (let x = 0; x < columns; x++) drops[x] = 1;
 
         function drawMatrix() {
             ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#0cf"; // Neon kék
+            ctx.fillStyle = "#0cf";
             ctx.font = fontSize + "px monospace";
-
             for (let i = 0; i < drops.length; i++) {
-                const char = text.charAt(Math.floor(Math.random() * text.length));
+                const char = matrixText.charAt(Math.floor(Math.random() * matrixText.length));
                 ctx.fillText(char, i * fontSize, drops[i] * fontSize);
                 if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
                 drops[i]++;
@@ -71,59 +65,40 @@
         }
         setInterval(drawMatrix, 50);
 
-        // --- 3D JÉGVIRÁG KÖR ---
+        // --- 3D LASSÚ JÉGVIRÁG ---
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        const iceGroup = new THREE.Group();
-        const iceGeo = new THREE.TorusKnotGeometry(10, 0.5, 100, 16); // Egy bonyolultabb, jegesebb forma
-        const iceMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.5 });
-        const iceMesh = new THREE.Mesh(iceGeo, iceMat);
-        iceGroup.add(iceMesh);
-        scene.add(iceGroup);
-
+        const geo = new THREE.TorusKnotGeometry(10, 0.4, 100, 16);
+        const mat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.5 });
+        const ice = new THREE.Mesh(geo, mat);
+        scene.add(ice);
         camera.position.z = 40;
-
-        let tX = 0, tY = 0;
-        document.addEventListener('pointermove', (e) => {
-            tY = (e.clientX - window.innerWidth / 2) * 0.0005;
-            tX = (e.clientY - window.innerHeight / 2) * 0.0005;
-        });
 
         function animate() {
             requestAnimationFrame(animate);
-            iceGroup.rotation.y += 0.005 + tY;
-            iceGroup.rotation.x += tX;
+            ice.rotation.y += 0.003; // Nagyon lassú forgás
             renderer.render(scene, camera);
         }
         animate();
 
-        // --- RENDSZER ---
+        // --- LOGIKA ---
         const video = document.getElementById('webcam');
         const scream = document.getElementById('screamSound');
         navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s);
 
         function check() {
             scream.play();
-            const val = document.getElementById('pass').value;
-            if(val === "1234") {
-                alert("ACCESS GRANTED. WELCOME SIMI.");
+            if(document.getElementById('pass').value === "1234") {
+                alert("ACCESS GRANTED");
             } else {
                 scream.loop = true;
-                alert("ALERT: INTRUDER RECORDED.");
+                alert("INTRUDER ALERT!");
             }
         }
-
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
     </script>
 </body>
 </html>

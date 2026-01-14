@@ -3,103 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHANTOM CORP | SECURITY INTERFACE</title>
+    <title>PHANTOM CORP | WHATSAPP SECURITY</title>
     <style>
         body { margin: 0; background: #000; color: #f00; font-family: 'Courier New', monospace; overflow: hidden; }
-        #canvas-container { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.4; }
-        
-        /* UI Layer */
-        #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
-        
-        /* 1. Arcfelismerő ablak */
-        #camera-box { position: absolute; top: 20px; left: 20px; width: 150px; height: 110px; border: 2px solid #f00; background: #050000; pointer-events: auto; }
-        #webcam { width: 100%; height: 100%; object-fit: cover; filter: sepia(1) saturate(5) hue-rotate(-50deg); }
-        .scanner-line { position: absolute; width: 100%; height: 2px; background: rgba(255,0,0,0.5); top: 0; animation: scan 2s linear infinite; }
-        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
-
-        /* Központi tartalom */
-        .header { margin-top: 150px; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px #f00; letter-spacing: 5px; }
-        #status { margin: 20px; color: #f00; font-weight: bold; }
-        
-        .input-box { pointer-events: auto; background: rgba(20,0,0,0.8); border: 1px solid #f00; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        input { background: #000; border: 1px solid #600; color: #f00; padding: 10px; text-align: center; margin-bottom: 10px; }
-        button { background: #800; color: #fff; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; }
-        button:active { background: #f00; }
-
-        /* Világtérkép háttér (szimuláció) */
-        #map-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: url('https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg') no-repeat center; background-size: cover; opacity: 0.1; filter: invert(1) sepia(1) saturate(10) hue-rotate(-50deg); }
-
-        /* Riasztás villogás */
-        .alarm-flash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,0,0,0.5); z-index: 100; display: none; pointer-events: none; }
+        #map-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: url('https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg') no-repeat center; background-size: cover; opacity: 0.15; filter: invert(1) sepia(1) saturate(20) hue-rotate(-50deg); }
+        #ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 400px; background: rgba(10,0,0,0.95); border: 2px solid #f00; padding: 30px; text-align: center; z-index: 10; box-shadow: 0 0 20px #f00; }
+        input { background: #111; border: 1px solid #f00; color: #f00; padding: 12px; width: 85%; text-align: center; font-size: 18px; margin: 15px 0; }
+        button { background: #f00; color: #000; border: none; padding: 12px 25px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; }
+        #camera-ui { position: absolute; top: 20px; left: 20px; width: 160px; height: 120px; border: 2px solid #f00; background: #000; }
+        #webcam { width: 100%; height: 100%; object-fit: cover; filter: sepia(1) hue-rotate(-50deg); }
+        #admin-panel { display: none; position: fixed; top: 5%; left: 5%; width: 90%; height: 90%; background: #050505; border: 3px solid #25d366; z-index: 100; padding: 20px; color: #25d366; overflow-y: auto; box-sizing: border-box; }
+        .admin-input { border: 1px solid #25d366; background: #000; color: #25d366; width: 100%; margin-bottom: 10px; padding: 8px; box-sizing: border-box; }
+        .alarm { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,0,0,0.5); display: none; z-index: 1000; pointer-events: none; }
     </style>
 </head>
 <body>
 
-    <div id="map-overlay"></div>
-    <div id="camera-box">
-        <video id="webcam" autoplay playsinline muted></video>
-        <div class="scanner-line"></div>
-        <div style="position:absolute; bottom:0; width:100%; font-size:8px; background:rgba(255,0,0,0.5); color:white;">FACIAL_SCAN: ACTIVE</div>
-    </div>
+<div id="map-overlay"></div>
+<div id="camera-ui"><video id="webcam" autoplay playsinline muted></video></div>
 
-    <div id="ui">
-        <div class="header">PHANTOM CORP.</div>
-        <div id="status">[ RENDSZER ÁLLAPOT: FIGYELÉS ]</div>
+<div id="ui">
+    <h2 id="logo-trigger" style="cursor:help;">PHANTOM CORP.</h2>
+    <p id="status">[ WHATSAPP VÉDELEM AKTÍV ]</p>
+    <input type="password" id="pass-input" placeholder="BIZTONSÁGI KÓD">
+    <button onclick="verify()">RENDSZER BELÉPÉS</button>
+</div>
+
+<div id="admin-panel">
+    <h2 style="color:#25d366;">WHATSAPP KONFIGURÁCIÓ</h2>
+    <label>Vevő WhatsApp száma (pl: +36301234567):</label>
+    <input type="text" id="conf-phone" class="admin-input">
+    <label>Saját Belépési Kód:</label>
+    <input type="text" id="conf-code" class="admin-input">
+    <label>Twilio Account SID:</label>
+    <input type="text" id="conf-sid" class="admin-input">
+    <label>Twilio Auth Token:</label>
+    <input type="password" id="conf-token" class="admin-input">
+    <hr>
+    <p style="font-size: 12px;">*A WhatsApp üzenetekhez a Twilio Sandbox beállítása szükséges.</p>
+    <button style="background:#25d366;" onclick="saveConfig()">MENTÉS ÉS AKTIVÁLÁS</button>
+    <button style="background:#444; margin-top:10px;" onclick="document.getElementById('admin-panel').style.display='none'">MÉGSE</button>
+</div>
+
+<div id="alarm" class="alarm"></div>
+<canvas id="snapshot" style="display:none;"></canvas>
+
+<script>
+    const video = document.getElementById('webcam');
+    navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s);
+
+    let config = JSON.parse(localStorage.getItem('phantomConfig')) || {
+        phone: "", code: "1234", sid: "", token: ""
+    };
+
+    // Admin panel megnyitása: hosszú nyomás a logón (2mp)
+    let pressTimer;
+    document.getElementById('logo-trigger').addEventListener('touchstart', () => pressTimer = setTimeout(() => document.getElementById('admin-panel').style.display='block', 2000));
+    document.getElementById('logo-trigger').addEventListener('touchend', () => clearTimeout(pressTimer));
+    document.getElementById('logo-trigger').addEventListener('mousedown', () => pressTimer = setTimeout(() => document.getElementById('admin-panel').style.display='block', 2000));
+    document.getElementById('logo-trigger').addEventListener('mouseup', () => clearTimeout(pressTimer));
+
+    function saveConfig() {
+        config.phone = document.getElementById('conf-phone').value;
+        config.code = document.getElementById('conf-code').value;
+        config.sid = document.getElementById('conf-sid').value;
+        config.token = document.getElementById('conf-token').value;
+        localStorage.setItem('phantomConfig', JSON.stringify(config));
+        document.getElementById('admin-panel').style.display='none';
+        alert("WhatsApp konfiguráció mentve!");
+    }
+
+    function verify() {
+        if(document.getElementById('pass-input').value === config.code) {
+            document.getElementById('status').innerText = "HOZZÁFÉRÉS MEGADVA.";
+            document.getElementById('status').style.color = "#0f0";
+        } else {
+            sendWhatsAppAlert();
+        }
+    }
+
+    function sendWhatsAppAlert() {
+        document.getElementById('alarm').style.display = 'block';
+        setTimeout(() => document.getElementById('alarm').style.display = 'none', 500);
         
-        <div class="input-box">
-            <input type="password" id="admin-code" placeholder="ADMINISZTRÁTORI KÓD">
-            <button onclick="verifyAccess()">BELÉPÉS</button>
-        </div>
-    </div>
+        // Twilio API hívás (WhatsApp)
+        if(config.sid && config.token && config.phone) {
+            const url = `https://api.twilio.com/2010-04-01/Accounts/${config.sid}/Messages.json`;
+            const auth = btoa(`${config.sid}:${config.token}`);
+            
+            const formData = new URLSearchParams();
+            formData.append('To', `whatsapp:${config.phone}`);
+            formData.append('From', 'whatsapp:+14155238886'); // Ez a Twilio alap Sandbox száma
+            formData.append('Body', '⚠️ PHANTOM CORP RIASZTÁS! Illetéktelen belépési kísérlet észlelve!');
 
-    <div id="alarm" class="alarm-flash"></div>
-
-    <script>
-        // 1. Kamera indítása
-        const video = document.getElementById('webcam');
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-                video.srcObject = stream;
-            }).catch(err => console.log("Kamera hiba: ", err));
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
+            }).then(() => alert("WhatsApp riasztás elküldve a vevőnek!"));
+        } else {
+            alert("RENDŐRSÉGI RIASZTÁS! (Állítsd be a Twilio adatokat az Admin panelen a valódi WhatsApphoz!)");
         }
-
-        // 3. Hangpszichológia és ellenőrzés
-        function verifyAccess() {
-            const code = document.getElementById('admin-code').value;
-            const status = document.getElementById('status');
-            const alarm = document.getElementById('alarm');
-
-            if (code === '1234') {
-                status.innerText = "[ HOZZÁFÉRÉS MEGADVA: ÜDVÖZÖLJÜK, LORD ]";
-                status.style.color = "#0f0";
-                playVoice("Welcome, Lord.");
-            } else {
-                status.innerText = "[ ILLETÉKTELEN BEHATOLÁS! ]";
-                status.style.color = "#fff";
-                
-                // Villogás
-                alarm.style.display = "block";
-                setTimeout(() => alarm.style.display = "none", 100);
-                setTimeout(() => alarm.style.display = "block", 200);
-                setTimeout(() => alarm.style.display = "none", 300);
-
-                // PSZICHOLÓGIA: Hang és értesítés
-                playVoice("Unauthorized access. Security protocol activated. GPS coordinates sent to police headquarters.");
-                alert("RENDŐRSÉGI RIASZTÁS: Csendes riasztás aktiválva. GPS koordináták elküldve.");
-                
-                if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
-            }
-            document.getElementById('admin-code').value = '';
-        }
-
-        function playVoice(text) {
-            const msg = new SpeechSynthesisUtterance();
-            msg.text = text;
-            msg.lang = 'en-US';
-            msg.pitch = 0.5; // Mély hacker hang
-            msg.rate = 0.8;
-            window.speechSynthesis.speak(msg);
-        }
-    </script>
+    }
+</script>
 </body>
 </html>

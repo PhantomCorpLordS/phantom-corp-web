@@ -2,27 +2,31 @@
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHANTOM V16 | BLUE RAIN</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PHANTOM SECURE V18</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body { margin: 0; background: #000; color: #0cf; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; }
+        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.3; }
         
-        /* Hacker Eső Vászon a háttérben */
-        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.4; }
-
         #login-panel {
-            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-            width: 260px; background: rgba(0, 5, 15, 0.95);
-            border: 1px solid #0cf; padding: 15px; text-align: center;
-            z-index: 100; box-shadow: 0 0 30px #048;
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 280px; background: rgba(0, 5, 15, 0.95);
+            border: 1px solid #0cf; padding: 20px; text-align: center;
+            z-index: 100; box-shadow: 0 0 30px #048; border-radius: 5px;
         }
         
-        input { background: #000; border: 1px solid #068; color: #0cf; width: 85%; padding: 10px; margin: 10px 0; text-align: center; outline: none; }
-        button { background: #068; color: #fff; border: none; padding: 10px; font-weight: bold; width: 93%; cursor: pointer; }
+        input { background: #000; border: 1px solid #068; color: #0cf; width: 85%; padding: 12px; margin: 10px 0; text-align: center; outline: none; font-size: 16px; }
+        button { background: #068; color: #fff; border: none; padding: 12px; font-weight: bold; width: 93%; cursor: pointer; transition: 0.3s; }
+        button:active { background: #0cf; }
 
-        #camera-ui { position: absolute; top: 15px; right: 15px; width: 100px; height: 80px; border: 1px solid #0cf; background: #000; z-index: 50; }
-        #webcam { width: 100%; height: 100%; object-fit: cover; filter: cyan(1) brightness(1.1); }
+        #camera-ui { position: absolute; top: 15px; right: 15px; width: 100px; height: 80px; border: 1px solid #0cf; background: #000; z-index: 50; overflow: hidden; }
+        #webcam { width: 100%; height: 100%; object-fit: cover; filter: cyan(1) brightness(1.2); }
+
+        #vault-area { display: none; margin-top: 15px; border-top: 1px dashed #068; padding-top: 15px; }
+        textarea { width: 90%; height: 120px; background: #001; color: #0cf; border: 1px solid #068; padding: 5px; font-family: monospace; }
+        
+        .status-text { font-size: 10px; letter-spacing: 2px; margin-bottom: 10px; color: #068; }
     </style>
 </head>
 <body>
@@ -31,41 +35,55 @@
     <div id="camera-ui"><video id="webcam" autoplay playsinline muted></video></div>
 
     <div id="login-panel">
-        <div style="font-size: 11px; letter-spacing: 2px; font-weight: bold;">PHANTOM.CORP.EST.2026</div>
-        <input type="password" id="pass" placeholder="SECURITY KEY">
-        <button onclick="check()">UNSEAL SYSTEM</button>
+        <div id="main-title" class="status-text">SYSTEM: ARMED // PHANTOM.CORP</div>
+        
+        <div id="auth-ui">
+            <input type="password" id="pass" placeholder="ENTER ACCESS KEY">
+            <button onclick="checkAuth()">INITIALIZE UNSEAL</button>
+        </div>
+
+        <div id="vault-area">
+            <div class="status-text" style="color:#0cf">ENCRYPTED VAULT ACCESS</div>
+            <textarea id="vault-notes" placeholder="Ide írhatod a titkos adatokat..."></textarea>
+            <button onclick="saveVault()" style="background:#048; margin-top:10px;">SAVE & LOCK</button>
+        </div>
     </div>
 
     <audio id="screamSound" src="https://www.soundjay.com/human/sounds/person-screaming-01.mp3"></audio>
 
     <script>
-        // --- KÉK DIGITÁLIS ESŐ ---
+        // --- 1. CONFIG (Twilio adatok helye) ---
+        // Simi, ide kerülnek majd a Twilio adataid a végleges appban
+        const config = {
+            phone: "+36XXXXXXXXX", 
+            sid: "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+            token: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        };
+
+        // --- 2. HACKER HÁTTÉR ---
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
         const matrixText = "PHANTOM.CORP.EST.2026";
         const fontSize = 14;
         const columns = canvas.width / fontSize;
-        const drops = [];
-        for (let x = 0; x < columns; x++) drops[x] = 1;
+        const drops = Array(Math.floor(columns)).fill(1);
 
         function drawMatrix() {
             ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = "#0cf";
             ctx.font = fontSize + "px monospace";
-            for (let i = 0; i < drops.length; i++) {
-                const char = matrixText.charAt(Math.floor(Math.random() * matrixText.length));
-                ctx.fillText(char, i * fontSize, drops[i] * fontSize);
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops.forEach((y, i) => {
+                const char = matrixText[Math.floor(Math.random() * matrixText.length)];
+                ctx.fillText(char, i * fontSize, y * fontSize);
+                if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
                 drops[i]++;
-            }
+            });
         }
         setInterval(drawMatrix, 50);
 
-        // --- 3D LASSÚ JÉGVIRÁG ---
+        // --- 3. 3D JÉGVIRÁG ---
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -73,32 +91,65 @@
         document.body.appendChild(renderer.domElement);
 
         const geo = new THREE.TorusKnotGeometry(10, 0.4, 100, 16);
-        const mat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.5 });
+        const mat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.4 });
         const ice = new THREE.Mesh(geo, mat);
         scene.add(ice);
         camera.position.z = 40;
 
         function animate() {
             requestAnimationFrame(animate);
-            ice.rotation.y += 0.003; // Nagyon lassú forgás
+            ice.rotation.y += 0.003;
             renderer.render(scene, camera);
         }
         animate();
 
-        // --- LOGIKA ---
+        // --- 4. KAMERA RENDSZER ---
         const video = document.getElementById('webcam');
-        const scream = document.getElementById('screamSound');
-        navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s);
+        navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s).catch(e => console.log("Camera blocked"));
 
-        function check() {
-            scream.play();
-            if(document.getElementById('pass').value === "1234") {
-                alert("ACCESS GRANTED");
+        // --- 5. LOGIKA: AUTH, SMS, VAULT ---
+        const scream = document.getElementById('screamSound');
+
+        function checkAuth() {
+            const input = document.getElementById('pass').value;
+            if(input === "1234") { // A Te kódod
+                scream.pause();
+                scream.currentTime = 0;
+                document.getElementById('auth-ui').style.display = "none";
+                document.getElementById('vault-area').style.display = "block";
+                document.getElementById('main-title').innerText = "SYSTEM: UNLOCKED";
+                document.getElementById('main-title').style.color = "#0cf";
+                document.getElementById('vault-notes').value = localStorage.getItem('phantom_vault') || "";
             } else {
-                scream.loop = true;
-                alert("INTRUDER ALERT!");
+                triggerAlarm();
             }
         }
+
+        function triggerAlarm() {
+            scream.loop = true;
+            scream.play();
+            document.getElementById('main-title').innerText = "!!! INTRUSION ALERT !!!";
+            document.getElementById('main-title').style.color = "#f00";
+            
+            // Twilio hívás szimuláció (beállított adatokkal küldi az üzenetet)
+            console.log("Twilio Alert: Intruder detected! Sending SMS to " + config.phone);
+            // Itt küldené el a fetch kérést a Twilio API-nak...
+        }
+
+        function saveVault() {
+            const notes = document.getElementById('vault-notes').value;
+            localStorage.setItem('phantom_vault', notes);
+            alert("DATA ENCRYPTED AND STORED.");
+            location.reload(); // Visszazárja a rendszert
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>

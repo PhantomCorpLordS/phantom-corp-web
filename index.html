@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PHANTOM SECURE V18</title>
+    <title>PHANTOM OS v1.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body { margin: 0; background: #000; color: #0cf; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; }
-        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.3; }
+        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.25; }
         
         #login-panel {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
@@ -16,17 +16,18 @@
             z-index: 100; box-shadow: 0 0 30px #048; border-radius: 5px;
         }
         
-        input { background: #000; border: 1px solid #068; color: #0cf; width: 85%; padding: 12px; margin: 10px 0; text-align: center; outline: none; font-size: 16px; }
-        button { background: #068; color: #fff; border: none; padding: 12px; font-weight: bold; width: 93%; cursor: pointer; transition: 0.3s; }
+        input { background: #000; border: 1px solid #068; color: #0cf; width: 85%; padding: 12px; margin: 10px 0; text-align: center; outline: none; font-size: 16px; border-radius: 0; }
+        button { background: #068; color: #fff; border: none; padding: 12px; font-weight: bold; width: 93%; cursor: pointer; transition: 0.3s; margin-top: 5px; }
         button:active { background: #0cf; }
 
         #camera-ui { position: absolute; top: 15px; right: 15px; width: 100px; height: 80px; border: 1px solid #0cf; background: #000; z-index: 50; overflow: hidden; }
         #webcam { width: 100%; height: 100%; object-fit: cover; filter: cyan(1) brightness(1.2); }
 
-        #vault-area { display: none; margin-top: 15px; border-top: 1px dashed #068; padding-top: 15px; }
-        textarea { width: 90%; height: 120px; background: #001; color: #0cf; border: 1px solid #068; padding: 5px; font-family: monospace; }
+        #vault-area { display: none; margin-top: 15px; border-top: 1px dashed #068; padding-top: 15px; text-align: left; }
+        textarea { width: 93%; height: 100px; background: #001; color: #0cf; border: 1px solid #068; padding: 5px; font-family: monospace; font-size: 12px; resize: none; }
         
-        .status-text { font-size: 10px; letter-spacing: 2px; margin-bottom: 10px; color: #068; }
+        .status-text { font-size: 10px; letter-spacing: 2px; margin-bottom: 10px; color: #068; font-weight: bold; }
+        .settings-label { font-size: 9px; color: #068; margin-top: 10px; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -43,24 +44,26 @@
         </div>
 
         <div id="vault-area">
-            <div class="status-text" style="color:#0cf">ENCRYPTED VAULT ACCESS</div>
-            <textarea id="vault-notes" placeholder="Ide írhatod a titkos adatokat..."></textarea>
-            <button onclick="saveVault()" style="background:#048; margin-top:10px;">SAVE & LOCK</button>
+            <div class="status-text" style="color:#0cf">SECURE STORAGE ACCESS</div>
+            <textarea id="vault-notes" placeholder="Titkos jegyzetek ide..."></textarea>
+            <button onclick="saveVault()">ENCRYPT & SAVE</button>
+            
+            <div class="settings-label">Security Settings</div>
+            <input type="password" id="new-pass" placeholder="NEW PASSWORD" style="padding: 5px; font-size: 12px;">
+            <button onclick="updatePass()" style="background:#400; font-size: 11px; padding: 5px;">CHANGE KEY</button>
+            
+            <button onclick="lockSystem()" style="background:#222; margin-top: 15px; font-size: 10px;">LOGOUT</button>
         </div>
     </div>
 
     <audio id="screamSound" src="https://www.soundjay.com/human/sounds/person-screaming-01.mp3"></audio>
 
     <script>
-        // --- 1. CONFIG (Twilio adatok helye) ---
-        // Simi, ide kerülnek majd a Twilio adataid a végleges appban
-        const config = {
-            phone: "+36XXXXXXXXX", 
-            sid: "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-            token: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-        };
+        // --- 1. CONFIG & SETUP ---
+        // Alapértelmezett jelszó: 1234 (ha még nincs beállítva)
+        if(!localStorage.getItem('phantom_key')) localStorage.setItem('phantom_key', '1234');
 
-        // --- 2. HACKER HÁTTÉR ---
+        // --- 2. HACKER HÁTTÉR (KÉK ESŐ) ---
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
@@ -103,21 +106,22 @@
         }
         animate();
 
-        // --- 4. KAMERA RENDSZER ---
+        // --- 4. CAMERA ---
         const video = document.getElementById('webcam');
-        navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s).catch(e => console.log("Camera blocked"));
+        navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s).catch(e => console.log("Cam Error"));
 
-        // --- 5. LOGIKA: AUTH, SMS, VAULT ---
+        // --- 5. LOGIKA ---
         const scream = document.getElementById('screamSound');
 
         function checkAuth() {
             const input = document.getElementById('pass').value;
-            if(input === "1234") { // A Te kódod
-                scream.pause();
-                scream.currentTime = 0;
+            const savedKey = localStorage.getItem('phantom_key');
+            
+            if(input === savedKey) {
+                scream.pause(); scream.currentTime = 0;
                 document.getElementById('auth-ui').style.display = "none";
                 document.getElementById('vault-area').style.display = "block";
-                document.getElementById('main-title').innerText = "SYSTEM: UNLOCKED";
+                document.getElementById('main-title').innerText = "PHANTOM OS - ACCESS GRANTED";
                 document.getElementById('main-title').style.color = "#0cf";
                 document.getElementById('vault-notes').value = localStorage.getItem('phantom_vault') || "";
             } else {
@@ -130,22 +134,31 @@
             scream.play();
             document.getElementById('main-title').innerText = "!!! INTRUSION ALERT !!!";
             document.getElementById('main-title').style.color = "#f00";
-            
-            // Twilio hívás szimuláció (beállított adatokkal küldi az üzenetet)
-            console.log("Twilio Alert: Intruder detected! Sending SMS to " + config.phone);
-            // Itt küldené el a fetch kérést a Twilio API-nak...
+            alert("ILLEGAL ACCESS DETECTED. AUTHORITIES NOTIFIED.");
         }
 
         function saveVault() {
-            const notes = document.getElementById('vault-notes').value;
-            localStorage.setItem('phantom_vault', notes);
-            alert("DATA ENCRYPTED AND STORED.");
-            location.reload(); // Visszazárja a rendszert
+            localStorage.setItem('phantom_vault', document.getElementById('vault-notes').value);
+            alert("VAULT UPDATED AND ENCRYPTED.");
+        }
+
+        function updatePass() {
+            const newKey = document.getElementById('new-pass').value;
+            if(newKey.length > 3) {
+                localStorage.setItem('phantom_key', newKey);
+                alert("ACCESS KEY CHANGED SUCCESSFULLY.");
+                lockSystem();
+            } else {
+                alert("KEY TOO SHORT (MIN 4 CHARS)");
+            }
+        }
+
+        function lockSystem() {
+            location.reload();
         }
 
         window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);

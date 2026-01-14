@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHANTOM V10 | DEMON EYES</title>
+    <title>PHANTOM V10.1 | REPAIRED SKULL</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body { margin: 0; background: #000; color: #f00; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; }
-        #login-panel { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 220px; background: rgba(0,0,0,0.9); border: 1px solid #f00; padding: 15px; text-align: center; z-index: 100; box-shadow: 0 0 20px #500; }
-        input { background: #000; border: 1px solid #500; color: #f00; width: 85%; padding: 8px; margin: 10px 0; text-align: center; outline: none; }
-        button { background: #500; color: #fff; border: none; padding: 10px; font-weight: bold; width: 93%; cursor: pointer; }
+        #login-panel { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 240px; background: rgba(0,0,0,0.9); border: 1px solid #f00; padding: 15px; text-align: center; z-index: 100; box-shadow: 0 0 20px #500; }
+        input { background: #000; border: 1px solid #500; color: #f00; width: 85%; padding: 10px; margin: 10px 0; text-align: center; outline: none; border-radius: 0; }
+        button { background: #800; color: #fff; border: none; padding: 10px; font-weight: bold; width: 93%; cursor: pointer; }
         #camera-ui { position: absolute; top: 15px; right: 15px; width: 100px; height: 80px; border: 1px solid #f00; background: #000; z-index: 50; }
-        #webcam { width: 100%; height: 100%; object-fit: cover; filter: sepia(1); }
+        #webcam { width: 100%; height: 100%; object-fit: cover; filter: sepia(1) contrast(1.5); }
     </style>
 </head>
 <body>
@@ -19,7 +19,7 @@
     <div id="camera-ui"><video id="webcam" autoplay playsinline muted></video></div>
 
     <div id="login-panel">
-        <div style="font-size: 10px; letter-spacing: 3px;">PHANTOM CORP V10</div>
+        <div style="font-size: 11px; letter-spacing: 3px; font-weight: bold;">PHANTOM CORP V10.1</div>
         <input type="password" id="pass" placeholder="PASSWORD">
         <button onclick="check()">LOGIN</button>
     </div>
@@ -31,67 +31,80 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // --- KOPONYA PONTFELHŐ ---
+        // --- SŰRŰBB KOPONYA GENERÁLÁSA ---
         const points = [];
-        for (let i = 0; i < 4000; i++) {
-            let x = Math.random() * 2 - 1, y = Math.random() * 2 - 1, z = Math.random() * 2 - 1;
+        for (let i = 0; i < 8000; i++) { // Több pont = jobb láthatóság
+            let x = Math.random() * 2 - 1;
+            let y = Math.random() * 2 - 1;
+            let z = Math.random() * 2 - 1;
+            
+            // Koponya-forma finomítása
             if (Math.sqrt(x*x + y*y + z*z) < 1) {
-                points.push(x * 10, (y * 13) + (Math.abs(x) * 2), z * 8);
+                let py = (y * 12) + (Math.abs(x) * 3); // Arccsont emelés
+                let pz = z * (y > 0 ? 8 : 5); // Állkapocs keskenyítés
+                points.push(x * 10, py, pz);
             }
         }
+        
         const geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
-        const mat = new THREE.PointsMaterial({ color: 0x550000, size: 0.1 });
+        const mat = new THREE.PointsMaterial({ 
+            color: 0xff0000, 
+            size: 0.15, // Kicsit nagyobb pontok
+            transparent: true,
+            opacity: 0.8
+        });
         const skull = new THREE.Points(geo, mat);
         scene.add(skull);
 
-        // --- VILLOGÓ SZEMEK ---
-        const eyeGeo = new THREE.SphereGeometry(0.8, 16, 16);
+        // --- IZZÓ SZEMEK ---
+        const eyeGeo = new THREE.SphereGeometry(1.2, 16, 16);
         const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
         
         const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-        leftEye.position.set(-3, 3, 7);
+        leftEye.position.set(-3.5, 4, 6);
         skull.add(leftEye);
 
         const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
-        rightEye.position.set(3, 3, 7);
+        rightEye.position.set(3.5, 4, 6);
         skull.add(rightEye);
 
-        camera.position.z = 30;
+        camera.position.z = 35;
 
         let isAlarm = false;
-        let rotY = 0;
+        let targetRotY = 0;
+        let currentRotY = 0;
+
         document.addEventListener('pointermove', (e) => {
-            rotY = (e.clientX - window.innerWidth / 2) * 0.005;
+            targetRotY = (e.clientX - window.innerWidth / 2) * 0.005;
         });
 
         function animate() {
             requestAnimationFrame(animate);
-            skull.rotation.y += 0.01 + rotY;
+            currentRotY += (targetRotY - currentRotY) * 0.1;
+            skull.rotation.y += 0.01 + currentRotY;
             
-            // Lüktetés vagy villogás
+            // Lüktetés
             const time = Date.now() * (isAlarm ? 0.02 : 0.005);
-            const scale = 1 + Math.sin(time) * 0.5;
-            leftEye.scale.set(scale, scale, scale);
-            rightEye.scale.set(scale, scale, scale);
+            const s = 1 + Math.sin(time) * 0.3;
+            leftEye.scale.set(s, s, s);
+            rightEye.scale.set(s, s, s);
             
             renderer.render(scene, camera);
         }
         animate();
 
-        // --- KAMERA ÉS LOGIKA ---
+        // --- RENDSZER ---
         const video = document.getElementById('webcam');
         navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s);
 
         function check() {
-            const p = document.getElementById('pass').value;
-            if(p === "1234") {
+            if(document.getElementById('pass').value === "1234") {
                 isAlarm = false;
-                alert("Üdvözöllek, Lord!");
+                alert("ACCESS GRANTED");
             } else {
-                isAlarm = true; // Elindul a vad villogás
-                alert("BEHATOLÁS! A szemek figyelnek!");
-                // Itt hívódik a korábbi WhatsApp küldő kód...
+                isAlarm = true;
+                alert("INTRUDER ALERT!");
             }
         }
     </script>

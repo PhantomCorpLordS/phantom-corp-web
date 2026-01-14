@@ -3,40 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHANTOM V11 | STEADY SKULL</title>
+    <title>PHANTOM V13 | BLUE SCREAM</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        body { margin: 0; background: #000; color: #f00; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; }
-        
-        /* Kicsi, fix belépő panel */
-        #login-panel {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 240px; background: rgba(0, 0, 0, 0.9);
-            border: 1px solid #f00; padding: 15px; text-align: center;
-            z-index: 100; box-shadow: 0 0 20px #500;
-        }
-        
-        input { background: #000; border: 1px solid #500; color: #f00; width: 85%; padding: 10px; margin: 10px 0; text-align: center; outline: none; }
-        button { background: #500; color: #fff; border: none; padding: 10px; font-weight: bold; width: 93%; cursor: pointer; }
-
-        /* Kamera ablak */
-        #camera-ui { position: absolute; top: 15px; right: 15px; width: 100px; height: 80px; border: 1px solid #f00; background: #000; z-index: 50; }
-        #webcam { width: 100%; height: 100%; object-fit: cover; filter: sepia(1) brightness(0.8); }
-
-        .alarm-flash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 0, 0, 0.4); display: none; z-index: 1000; pointer-events: none; }
+        body { margin: 0; background: #000; color: #0cf; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; }
+        #login-panel { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 240px; background: rgba(0, 10, 20, 0.9); border: 1px solid #0cf; padding: 15px; text-align: center; z-index: 100; box-shadow: 0 0 20px #048; }
+        input { background: #000; border: 1px solid #068; color: #0cf; width: 85%; padding: 10px; margin: 10px 0; text-align: center; outline: none; }
+        button { background: #068; color: #fff; border: none; padding: 10px; font-weight: bold; width: 93%; cursor: pointer; }
+        #camera-ui { position: absolute; top: 15px; right: 15px; width: 100px; height: 80px; border: 1px solid #0cf; background: #000; z-index: 50; }
+        #webcam { width: 100%; height: 100%; object-fit: cover; filter: cyan(1) brightness(1.2); }
+        .scan-line { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: rgba(0, 255, 255, 0.3); z-index: 1000; animation: scan 3s linear infinite; }
+        @keyframes scan { from { top: 0; } to { top: 100%; } }
     </style>
 </head>
 <body>
 
+    <div class="scan-line"></div>
     <div id="camera-ui"><video id="webcam" autoplay playsinline muted></video></div>
 
     <div id="login-panel">
-        <div style="font-size: 11px; letter-spacing: 3px; font-weight: bold;">PHANTOM CORP V11</div>
-        <input type="password" id="pass" placeholder="SECURITY CODE">
-        <button onclick="check()">LOGIN</button>
+        <div style="font-size: 12px; letter-spacing: 3px; font-weight: bold;">PHANTOM CORE V13</div>
+        <input type="password" id="pass" placeholder="ACCESS CODE">
+        <button onclick="check()">INITIALIZE</button>
     </div>
 
-    <div id="alarm" class="alarm-flash"></div>
+    <audio id="screamSound" src="https://www.soundjay.com/human/sounds/person-screaming-01.mp3"></audio>
 
     <script>
         const scene = new THREE.Scene();
@@ -45,71 +36,51 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // --- LÁTHATÓBB, HÁLÓS ALAKZAT (Koponya alap) ---
-        // Egy speciális poliéder geometriát használunk, ami messziről koponya formájú
-        const geometry = new THREE.IcosahedronGeometry(10, 2); 
-        const material = new THREE.MeshBasicMaterial({ 
-            color: 0xff0000, 
-            wireframe: true, 
-            transparent: true, 
-            opacity: 0.4 
-        });
-        const skullModel = new THREE.Mesh(geometry, material);
-        scene.add(skullModel);
-
-        // --- IZZÓ SZEMEK (Fixen rögzítve) ---
-        const eyeGeo = new THREE.SphereGeometry(1.2, 16, 16);
-        const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const group = new THREE.Group();
+        const ringGeo = new THREE.TorusGeometry(10, 0.2, 16, 100);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
         
-        const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-        leftEye.position.set(-3.5, 3, 7.5);
-        skullModel.add(leftEye);
-
-        const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
-        rightEye.position.set(3.5, 3, 7.5);
-        skullModel.add(rightEye);
-
+        for(let i=0; i<3; i++) {
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.random() * Math.PI;
+            ring.rotation.y = Math.random() * Math.PI;
+            group.add(ring);
+        }
+        scene.add(group);
         camera.position.z = 35;
 
-        let isAlarm = false;
-        let targetRotY = 0;
-        let currentRotY = 0;
-
-        // Lassabb ujjkövetés
+        let targetX = 0, targetY = 0;
         document.addEventListener('pointermove', (e) => {
-            targetRotY = (e.clientX - window.innerWidth / 2) * 0.002;
+            targetY = (e.clientX - window.innerWidth / 2) * 0.001;
+            targetX = (e.clientY - window.innerHeight / 2) * 0.001;
         });
 
         function animate() {
             requestAnimationFrame(animate);
-            
-            // Lassabb, egyenletes forgás
-            currentRotY += (targetRotY - currentRotY) * 0.05;
-            skullModel.rotation.y += 0.005 + currentRotY; 
-            
-            // Szemek lüktetése (ha riasztás van, gyorsabb)
-            const pulseSpeed = isAlarm ? 0.02 : 0.005;
-            const s = 1 + Math.sin(Date.now() * pulseSpeed) * 0.3;
-            leftEye.scale.set(s, s, s);
-            rightEye.scale.set(s, s, s);
-            
+            group.rotation.y += 0.005 + targetY;
+            group.rotation.x += targetX;
             renderer.render(scene, camera);
         }
         animate();
 
-        // --- FUNKCIÓK ---
+        // --- KAMERA ÉS HANG LOGIKA ---
         const video = document.getElementById('webcam');
+        const scream = document.getElementById('screamSound');
         navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s);
 
         function check() {
-            if(document.getElementById('pass').value === "1234") {
-                isAlarm = false;
-                alert("ACCESS GRANTED");
+            const code = document.getElementById('pass').value;
+            // Minden gombnyomásra megszólal egy pillanatra (hogy ijesztő legyen)
+            scream.play();
+
+            if(code === "1234") {
+                setTimeout(() => { scream.pause(); scream.currentTime = 0; }, 500);
+                alert("SYSTEM UNLOCKED, MASTER SIMI");
             } else {
-                isAlarm = true;
-                document.getElementById('alarm').style.display = 'block';
-                setTimeout(() => document.getElementById('alarm').style.display = 'none', 500);
-                alert("INTRUDER ALERT! WHATSAPP NOTIFICATION SENT.");
+                // Rossz kód esetén visítás loopolva
+                scream.loop = true;
+                scream.play();
+                alert("!!! UNAUTHORIZED ACCESS !!!");
             }
         }
     </script>
